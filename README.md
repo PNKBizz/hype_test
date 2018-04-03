@@ -1,18 +1,11 @@
-# hypetest
+## API
 
-> A Vue.js project
+`options` - предопределенный массив опций селекта <br>
+`tags` - предустановленные тэги<br>
+`fetchUrl` - url для получения данных<br>
+`matchedField` - поле, по которому проводится поиск в массиве опций автокомплита<br>
+`responseMapper` - функция для промежуточной обработки данных с сервера<br><br>
 
-## Build Setup
+## Dependencies
 
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-```
-
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+`axios`, `fuzzysearch`
