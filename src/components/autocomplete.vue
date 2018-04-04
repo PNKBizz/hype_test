@@ -9,25 +9,27 @@
                 span.close-icon(
                     @click.stop="deleteTag(tag)"
                 ) &#10006;
-        input.autocomplete__input(
-            v-model="inputVal"
-            @click.stop=""
-            @keyup.enter="addTagByEnter"
-            @focus.once="fetchOptions"
-            @focus="open"
-            @input="handleInput"
-        )
-        ul.autocomplete__options(v-show="showOptions")
-            li.autocomplete__options-item(
-                v-if="optionsIsLoading"
-            ) Загружаем результаты...
-            li.autocomplete__options-item(
-                v-else
-                v-for="option in matchedOptions"
-                @click.stop="addTag(option)"
-            )
-                span(v-if="isOptionSlotEmpty") {{ option }}
-                slot(name="optionLayout", :option="option")
+            li.autocomplete__input-wrapper
+                input.autocomplete__input(
+                    v-model="inputVal"
+                    @click.stop=""
+                    @keyup.enter="addTagByEnter"
+                    @focus.once="fetchOptions"
+                    @focus="open"
+                    @input="handleInput"
+                )
+                .autocomplete__options(v-show="showOptions")
+                    ul.autocomplete__options-list
+                        li.autocomplete__options-item(
+                            v-if="optionsIsLoading"
+                        ) Загружаем результаты...
+                        li.autocomplete__options-item(
+                            v-else
+                            v-for="option in matchedOptions"
+                            @click.stop="addTag(option)"
+                        )
+                            span(v-if="isOptionSlotEmpty") {{ option }}
+                            slot(name="optionLayout", :option="option")
         span.error(v-if="error") {{ error }} 
 </template>
 
@@ -41,7 +43,7 @@ export default {
             type: Array,
             default: () => []
         },
-        tags: {
+        value: {
             type: Array,
             default: () => []
         },
@@ -51,7 +53,7 @@ export default {
     },
     data() {
         return {
-            currentTags: this.tags,
+            currentTags: this.value,
             currentOptions: this.options,
             fetchedOptions: null,
             showOptions: false,
@@ -65,7 +67,9 @@ export default {
             if (!this.inputVal) return [];
             const options = this.fetchedOptions || this.options;
             const field = typeof options[0] === 'object' && this.matchedField;
-            return options.filter(option => fuzzysearch(this.inputVal, field && option[field] || option));
+            const matched = options.filter(option => fuzzysearch(this.inputVal, field && option[field] || option));
+            if (!matched.length) this.close();
+            return matched;
         },
         isOptionSlotEmpty() { return !this.$scopedSlots.optionLayout; },
         isTagSlotEmpty() { return !this.$scopedSlots.tagLayout; }
@@ -92,6 +96,9 @@ export default {
         },
         addTag(option) {
             this.currentTags = this.currentTags.concat([option]);
+            this.inputVal = '';
+            this.close();
+            this.$emit('input', this.currentTags);
         },
         deleteTag(deletedTag) {
             const field = this.matchedField;
@@ -120,11 +127,10 @@ export default {
 
 <style lang="scss" scoped>
     .autocomplete {
-        max-width: 500px;
         display: flex;
         position: relative;
-        padding-bottom: 5px;
         border-bottom: 1px solid #777;
+        flex-wrap: wrap;
 
         ul {
             list-style: none;
@@ -138,14 +144,16 @@ export default {
 
         &__tags {
             display: flex;
+            flex-wrap: wrap;
+            flex-grow: 1;
 
             &-item {
                 padding: 5px 25px 5px 10px;
-                background-color: #DDD;
-                color: #777;
-                margin: 0 5px;
+                background-color: rgb(35, 123, 255);
+                color: white;
+                margin: 5px;
                 position: relative;
-                border-radius: 5px;
+                border-radius: 3px;
 
                 .close-icon {
                     position: absolute;
@@ -161,28 +169,56 @@ export default {
             background-color: transparent;
             outline: none;
             font-size: 1.2em;
+            width: 10px;
+
+            &-wrapper {
+                position: relative;
+                flex-grow: 1;
+                display: flex;
+            }
         }
 
         &__options {
             position: absolute;
             z-index: 99;
-            top: 100%;
+            top: calc(100% + 10px);
+            left: -50%;
             width: 100%;
-            padding-left: 10px;
-            background-color: rgba($color: #fff, $alpha: .9);
             max-height: 300px;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            &:before {
+                content: '';
+                width: 0;
+                height: 0;
+                border: 5px solid transparent;
+                border-bottom-color: white;
+                position: absolute;
+                top: -10px;
+            }
+
+            &-list {
+                overflow-y: auto;
+                padding-left: 10px;
+                background-color: white;
+                border-radius: 5px;
+                position: relative;
+            }
 
             &-item {
                 padding: 10px 20px;
-                margin: 5px 0;
+                margin:
+                 5px 0;
 
                 &:first-child, &:last-child {
                     margin: 0;
                 }
 
                 &:hover {
-                    background-color: #DDD;
+                    background-color: rgb(35, 123, 255);
+                    color: white;
                 }
             }
         }
