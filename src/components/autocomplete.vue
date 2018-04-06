@@ -12,8 +12,11 @@
             li.autocomplete__input-wrapper
                 input.autocomplete__input(
                     v-model="inputVal"
+                    ref="autocompleteInput"
                     @click.stop=""
-                    @keyup.enter="addTagByEnter"
+                    @keyup.enter="addTag(focusedOption)"
+                    @keyup.up="arrowHandler('up')",
+                    @keyup.down="arrowHandler('down')"
                     @focus.once="fetchOptions"
                     @focus="open"
                     @input="handleInput"
@@ -24,8 +27,10 @@
                             v-if="optionsIsLoading"
                         ) Загружаем результаты...
                         li.autocomplete__options-item(
+                            :class="{ focused: focusedOption === option }"
                             v-else
                             v-for="option in matchedOptions"
+                            @mouseover="focusedOption = option"
                             @click.stop="addTag(option)"
                         )
                             span(v-if="isOptionSlotEmpty") {{ option }}
@@ -59,6 +64,7 @@ export default {
             showOptions: false,
             optionsIsLoading: false,
             inputVal: '',
+            focusedOption: '',
             error: ''
         }
     },
@@ -95,9 +101,11 @@ export default {
             });
         },
         addTag(option) {
+            if (!option) return;
             this.currentTags = this.currentTags.concat([option]);
             this.inputVal = '';
             this.close();
+            this.$refs.autocompleteInput.focus();
             this.$emit('input', this.currentTags);
         },
         deleteTag(deletedTag) {
@@ -107,9 +115,20 @@ export default {
         },
         close() {
             this.showOptions = false;
+            this.focusedOption = '';
         },
         open() {
             this.showOptions = !!this.inputVal;
+        },
+        arrowHandler(key) {
+            if (this.showOptions && this.matchedOptions.length) {
+                const currentIndex = this.matchedOptions.findIndex(option => option === this.focusedOption);
+                if (key === 'up' && currentIndex > 0) {
+                    this.focusedOption = this.matchedOptions[currentIndex - 1]; 
+                } else if (key === 'down' && currentIndex < (this.matchedOptions.length - 1)) {
+                    this.focusedOption = this.matchedOptions[currentIndex + 1]; 
+                }
+            }
         }
     },
     mounted() {
@@ -216,7 +235,7 @@ export default {
                     margin: 0;
                 }
 
-                &:hover {
+                &.focused {
                     background-color: rgb(35, 123, 255);
                     color: white;
                 }
